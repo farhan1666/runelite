@@ -39,6 +39,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 
 import javax.inject.Inject;
+import java.awt.*;
 
 @PluginDescriptor(
 	name = "Magic Imbue Accurate Timer",
@@ -50,7 +51,9 @@ public class ImbueTimerPlugin extends Plugin
 {
 	private static final String MAGIC_IMBUE_EXPIRED_MESSAGE = "Your Magic Imbue charge has ended.";
 	private static final String MAGIC_IMBUE_MESSAGE = "You are charged to combine runes!";
-	private static final int MAGIC_IMBUE_DURATION = 21;
+	private static final String MAGIC_IMBUE_WARNING = "Your Magic Imbue spell charge is running out...";
+	private static final int MAGIC_IMBUE_DURATION = 20;
+	private static final int MAGIC_IMBUE_WARNING_DURATION = 10;
 
 	@Inject
 	private SpriteManager spriteManager;
@@ -64,8 +67,9 @@ public class ImbueTimerPlugin extends Plugin
 	@Inject
 	private InfoBoxManager infoBoxManager;
 
-	@Inject
 	private TickCounter counter;
+
+	boolean isFirstMessage = false;
 
 	@Provides
     TimersConfig getConfig(ConfigManager configManager)
@@ -82,7 +86,7 @@ public class ImbueTimerPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (!config.showMagicImbue()) {
+		if (!config.showAccurateMagicImbue()) {
 			removeTickCounter();
 		}
 	}
@@ -95,9 +99,22 @@ public class ImbueTimerPlugin extends Plugin
 			return;
 		}
 
-		if (config.showMagicImbue() && event.getMessage().equals(MAGIC_IMBUE_MESSAGE))
+		if (config.showAccurateMagicImbue() && event.getMessage().equals(MAGIC_IMBUE_MESSAGE))
 		{
-			createTickCounter();
+			createTickCounter(MAGIC_IMBUE_DURATION);
+			isFirstMessage = true;
+		}
+
+		if (config.showAccurateMagicImbue() && event.getMessage().equals(MAGIC_IMBUE_WARNING))
+		{
+			if (isFirstMessage)
+			{
+				if (counter == null)
+					createTickCounter(MAGIC_IMBUE_WARNING_DURATION);
+				else
+					counter.setCount(MAGIC_IMBUE_WARNING_DURATION);
+				isFirstMessage = false;
+			}
 		}
 
 		if (event.getMessage().equals(MAGIC_IMBUE_EXPIRED_MESSAGE))
@@ -109,15 +126,38 @@ public class ImbueTimerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		counter.setCount(counter.getCount() - 1);
+		if (counter == null)
+		{
+			return;
+		}
+
+		if (counter.getCount() > -1) {
+			if (counter.getCount() == 0)
+			{
+				counter.setTextColor(Color.RED);
+			}
+			counter.setCount(counter.getCount() - 1);
+		}
+		else
+		{
+			removeTickCounter();
+		}
 	}
 
-	private void createTickCounter()
+	private void createTickCounter(int duration)
 	{
-		counter = new TickCounter(null, this, MAGIC_IMBUE_DURATION);
-		spriteManager.getSpriteAsync(SpriteID.SPELL_MAGIC_IMBUE, 0, counter);
-		counter.setTooltip("Magic imbue");
-		infoBoxManager.addInfoBox(counter);
+		if (counter == null)
+		{
+			counter = new TickCounter(null, this, duration);
+			spriteManager.getSpriteAsync(SpriteID.SPELL_MAGIC_IMBUE, 0, counter);
+			counter.setTooltip("Magic imbue");
+			infoBoxManager.addInfoBox(counter);
+		}
+		else
+		{
+			counter.setCount(duration);
+			counter.setTextColor(Color.WHITE);
+		}
 	}
 
 	private void removeTickCounter()
@@ -130,4 +170,5 @@ public class ImbueTimerPlugin extends Plugin
 		infoBoxManager.removeInfoBox(counter);
 		counter = null;
 	}
+
 }

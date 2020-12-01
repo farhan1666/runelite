@@ -34,11 +34,11 @@ import java.time.Instant;
 public interface TimersConfig extends Config
 {
 	@ConfigItem(
-		keyName = "showMagicImbue",
+		keyName = "showAccurateMagicImbue",
 		name = "Magic imbue timer",
 		description = "Configures whether magic imbue timer is displayed"
 	)
-	default boolean showMagicImbue()
+	default boolean showAccurateMagicImbue()
 	{
 		return true;
 	}

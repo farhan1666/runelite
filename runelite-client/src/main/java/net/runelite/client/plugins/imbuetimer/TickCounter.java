@@ -27,7 +27,7 @@ package net.runelite.client.plugins.imbuetimer;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.ui.overlay.infobox.Counter;
 
-import javax.inject.Inject;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 
 class TickCounter extends Counter
@@ -36,6 +36,18 @@ class TickCounter extends Counter
     {
         super(img, plugin, amount);
     }
+
+    private Color textColor;
+
+    @Override
+    public Color getTextColor() {
+        return this.textColor;
+    }
+
+    public void setTextColor(Color color) {
+        this.textColor = color;
+    }
 }
+
 
 
